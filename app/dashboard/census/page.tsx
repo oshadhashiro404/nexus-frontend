@@ -1,103 +1,53 @@
 "use client";
 
-import { useState } from "react";
-import { useBunker, type Clearance, type SurvivorStatus } from "@/context/BunkerContext";
+import { useBunker } from "@/context/BunkerContext";
 import { ActionErrorBanner } from "@/components/ActionErrorBanner";
-import {
-  Badge,
-  Btn,
-  Empty,
-  FieldInput,
-  FieldSelect,
-  Label,
-  PageHeader,
-  Panel,
-} from "@/components/terminal-ui";
+import { Badge, Empty, PageHeader, Panel } from "@/components/terminal-ui";
 
-const CLEARANCE_LEVELS: Clearance[] = ["NONE", "DELTA", "GAMMA", "BETA", "ALPHA", "NEXUS"];
-const STATUS_OPTIONS: SurvivorStatus[] = ["active", "quarantined", "deceased", "missing"];
-
-const statusTone: Record<SurvivorStatus, "default" | "ok" | "warn" | "err"> = {
-  active: "ok",
-  quarantined: "err",
-  deceased: "default",
-  missing: "warn",
-};
+function formatDate(iso: string) {
+  if (!iso) return "—";
+  try {
+    return new Date(iso).toLocaleDateString("en-GB");
+  } catch {
+    return iso;
+  }
+}
 
 export default function CensusPage() {
-  const { survivors, addSurvivor, updateSurvivor, deleteSurvivor, loading, clearActionError } =
-    useBunker();
-  const [formData, setFormData] = useState({
-    full_name: "",
-    duty: "",
-    clearance: "DELTA" as Clearance,
-    status: "active" as SurvivorStatus,
-  });
-  const [submitting, setSubmitting] = useState(false);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    clearActionError();
-    setSubmitting(true);
-    const ok = await addSurvivor({
-      ...formData,
-      identity_code: `SUR-${Date.now().toString(36).toUpperCase()}`,
-    });
-    if (ok) {
-      setFormData({ full_name: "", duty: "", clearance: "DELTA", status: "active" });
-    }
-    setSubmitting(false);
-  };
-
-  const handleCycleStatus = async (id: string, current: SurvivorStatus) => {
-    const next: SurvivorStatus = current === "active" ? "quarantined" : "active";
-    await updateSurvivor(id, { status: next });
-  };
+  const { survivors, loading, survivorsSource, refreshData, connectionError } = useBunker();
 
   if (loading) {
-    return <p className="text-xs text-[var(--muted)] py-8 text-center">loading...</p>;
+    return <p className="text-xs text-[var(--muted)] py-8 text-center">loading registry...</p>;
   }
 
   return (
     <div className="space-y-3">
       <ActionErrorBanner />
-      <PageHeader title="Survivor Census" subtitle="Population registry" />
+      <PageHeader
+        title="Survivor Census"
+        subtitle={
+          survivorsSource === "external"
+            ? "Remote registry · 69.28.90.158:3001"
+            : "Nexus governance database"
+        }
+      />
 
-      <Panel title="register">
-        <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-4 gap-2 items-end">
-          <div>
-            <Label>name</Label>
-            <FieldInput
-              required
-              value={formData.full_name}
-              onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
-              placeholder="full name"
-            />
-          </div>
-          <div>
-            <Label>duty</Label>
-            <FieldInput
-              value={formData.duty}
-              onChange={(e) => setFormData({ ...formData, duty: e.target.value })}
-              placeholder="technician"
-            />
-          </div>
-          <div>
-            <Label>clearance</Label>
-            <FieldSelect
-              value={formData.clearance}
-              onChange={(e) => setFormData({ ...formData, clearance: e.target.value as Clearance })}
-            >
-              {CLEARANCE_LEVELS.map((lvl) => (
-                <option key={lvl}>{lvl}</option>
-              ))}
-            </FieldSelect>
-          </div>
-          <Btn type="submit" disabled={submitting} className="w-full">
-            {submitting ? "..." : "register"}
-          </Btn>
-        </form>
-      </Panel>
+      {connectionError && (
+        <div className="border border-[var(--red)]/40 bg-[var(--red)]/10 px-2 py-1.5 text-[11px] text-[var(--red)]">
+          {connectionError}
+        </div>
+      )}
+
+      <div className="flex items-center justify-between text-[10px] text-[var(--muted)] uppercase tracking-wide">
+        <span>source: {survivorsSource}</span>
+        <button
+          type="button"
+          onClick={() => refreshData()}
+          className="text-[var(--fg-dim)] hover:text-[var(--fg)]"
+        >
+          [refresh]
+        </button>
+      </div>
 
       <Panel title={`registry (${survivors.length})`}>
         <div className="overflow-x-auto -mx-3 -mb-3">
@@ -105,46 +55,50 @@ export default function CensusPage() {
             <thead>
               <tr className="text-[9px] uppercase tracking-wider text-[var(--muted)] border-b border-[var(--line)]">
                 <th className="py-2 px-3">id</th>
-                <th className="py-2 px-2">identity</th>
-                <th className="py-2 px-2">duty</th>
-                <th className="py-2 px-2">clr</th>
-                <th className="py-2 px-2 text-center">status</th>
-                <th className="py-2 px-3 text-right">act</th>
+                <th className="py-2 px-2">name</th>
+                <th className="py-2 px-2">age</th>
+                <th className="py-2 px-2">sector</th>
+                <th className="py-2 px-2 hidden lg:table-cell">skills</th>
+                <th className="py-2 px-3 text-right">registered</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[var(--line)]">
               {survivors.length === 0 ? (
                 <tr>
                   <td colSpan={6}>
-                    <Empty>no entities</Empty>
+                    <Empty>no entities in registry</Empty>
                   </td>
                 </tr>
               ) : (
                 survivors.map((s) => (
-                  <tr key={s.id} className="hover:bg-[var(--fg)]/5">
-                    <td className="py-2 px-3 font-mono text-[10px] text-[var(--muted)]">
-                      {s.identity_code}
+                  <tr key={s.id} className="hover:bg-[var(--fg)]/5 align-top">
+                    <td className="py-2 px-3 font-mono text-[10px] text-[var(--muted)] max-w-[100px] truncate" title={s.id}>
+                      {s.id.slice(0, 10)}…
                     </td>
                     <td className="py-2 px-2 font-bold text-[var(--fg)]">{s.full_name}</td>
-                    <td className="py-2 px-2 text-[var(--muted)] uppercase text-[10px]">
-                      {s.duty ?? "—"}
-                    </td>
+                    <td className="py-2 px-2 tabular-nums text-[var(--muted)]">{s.age ?? "—"}</td>
                     <td className="py-2 px-2">
-                      <Badge>{s.clearance}</Badge>
+                      <Badge tone="ok">{s.sector ?? s.duty ?? "—"}</Badge>
                     </td>
-                    <td className="py-2 px-2 text-center">
-                      <button type="button" onClick={() => handleCycleStatus(s.id, s.status)}>
-                        <Badge tone={statusTone[s.status]}>{s.status}</Badge>
-                      </button>
+                    <td className="py-2 px-2 hidden lg:table-cell">
+                      {s.skills && s.skills.length > 0 ? (
+                        <div className="flex flex-wrap gap-1">
+                          {s.skills.map((skill) => (
+                            <span
+                              key={skill.id}
+                              className="text-[9px] text-[var(--muted)] border border-[var(--line)] px-1"
+                              title={skill.category}
+                            >
+                              {skill.name}
+                            </span>
+                          ))}
+                        </div>
+                      ) : (
+                        <span className="text-[var(--muted)]">—</span>
+                      )}
                     </td>
-                    <td className="py-2 px-3 text-right">
-                      <button
-                        type="button"
-                        onClick={() => deleteSurvivor(s.id)}
-                        className="text-[10px] text-[var(--muted)] hover:text-[var(--red)]"
-                      >
-                        del
-                      </button>
+                    <td className="py-2 px-3 text-right text-[10px] text-[var(--muted)] tabular-nums">
+                      {formatDate(s.registered_at)}
                     </td>
                   </tr>
                 ))

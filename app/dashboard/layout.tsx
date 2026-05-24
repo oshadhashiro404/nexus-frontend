@@ -42,6 +42,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const pathname = usePathname();
   const pageTitle =
     [...navigation, ...sectorHubs].find((n) => n.href === pathname)?.name ?? "Console";
+  const isArchiveEmbed = pathname === "/dashboard/archive";
 
   return (
     <BunkerProvider>
@@ -94,8 +95,18 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </div>
           </header>
 
-          <main className="flex-1 overflow-y-auto p-3 bg-black">
-            <div className="max-w-5xl mx-auto space-y-3">{children}</div>
+          <main
+            className={
+              isArchiveEmbed
+                ? "flex-1 min-h-0 flex flex-col overflow-hidden bg-black"
+                : "flex-1 overflow-y-auto p-3 bg-black"
+            }
+          >
+            {isArchiveEmbed ? (
+              children
+            ) : (
+              <div className="max-w-5xl mx-auto space-y-3">{children}</div>
+            )}
           </main>
         </div>
       </div>

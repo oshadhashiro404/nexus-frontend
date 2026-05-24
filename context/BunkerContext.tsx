@@ -7,6 +7,7 @@ import React, {
   useEffect,
   useCallback,
 } from "react";
+import { externalToSurvivor } from "@/lib/external-survivors";
 import {
   normalizePolicy,
   nexusFetch,
@@ -25,6 +26,13 @@ export type PolicyStatus = "draft" | "active" | "suspended" | "retired";
 
 export type Policy = NexusPolicy & { status: PolicyStatus; min_clearance: Clearance };
 
+export interface SurvivorSkill {
+  id: string;
+  name: string;
+  category: string;
+  survivorId?: string;
+}
+
 export interface Survivor {
   id: string;
   identity_code: string;
@@ -35,6 +43,10 @@ export interface Survivor {
   assigned_zone_id: string | null;
   registered_at: string;
   updated_at: string;
+  /** Present when loaded from external registry */
+  age?: number;
+  sector?: string;
+  skills?: SurvivorSkill[];
 }
 
 export interface HealthRecord {
@@ -68,6 +80,7 @@ interface BunkerContextType {
   actionError: string | null;
   clearActionError: () => void;
   refreshData: () => void;
+  survivorsSource: "external" | "nexus";
   addSurvivor: (data: Partial<Survivor>) => Promise<boolean>;
   updateSurvivor: (id: string, data: Partial<Survivor>) => Promise<boolean>;
   deleteSurvivor: (id: string) => Promise<boolean>;
@@ -93,6 +106,7 @@ export function BunkerProvider({ children }: { children: React.ReactNode }) {
   const [dbConnected, setDbConnected] = useState(false);
   const [connectionError, setConnectionError] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [survivorsSource, setSurvivorsSource] = useState<"external" | "nexus">("external");
 
   const clearActionError = useCallback(() => setActionError(null), []);
 
@@ -103,11 +117,11 @@ export function BunkerProvider({ children }: { children: React.ReactNode }) {
 
       const [pRes, sRes] = await Promise.all([
         fetch("/api/admin/policies?limit=200"),
-        fetch("/api/admin/survivors?limit=200"),
+        fetch("/api/external/survivors"),
       ]);
 
-      if (!pRes.ok || !sRes.ok) {
-        throw new Error(`API failure — Policies:${pRes.status} Survivors:${sRes.status}`);
+      if (!pRes.ok) {
+        throw new Error(`API failure — Policies:${pRes.status}`);
       }
 
       const [pJson, sJson] = await Promise.all([pRes.json(), sRes.json()]);
@@ -119,7 +133,22 @@ export function BunkerProvider({ children }: { children: React.ReactNode }) {
 
       const rawPolicies = (pJson?.data?.items ?? []) as Policy[];
       setPolicies(rawPolicies.map((p) => normalizePolicy(p) as Policy));
-      setSurvivors(sJson?.data?.items ?? []);
+
+      if (sRes.ok && sJson?.ok !== false) {
+        const externalItems = sJson?.data?.items ?? [];
+        setSurvivors(externalItems.map(externalToSurvivor));
+        setSurvivorsSource("external");
+      } else {
+        const fallback = await fetch("/api/admin/survivors?limit=200");
+        if (!fallback.ok) {
+          throw new Error(
+            `Survivors unavailable — external:${sRes.status} nexus:${fallback.status}`,
+          );
+        }
+        const fallbackJson = await fallback.json();
+        setSurvivors(fallbackJson?.data?.items ?? []);
+        setSurvivorsSource("nexus");
+      }
 
       if (hRes.status === "fulfilled" && hRes.value.ok) {
         const hJson = await hRes.value.json();
@@ -241,6 +270,7 @@ export function BunkerProvider({ children }: { children: React.ReactNode }) {
         actionError,
         clearActionError,
         refreshData: fetchData,
+        survivorsSource,
         addSurvivor,
         updateSurvivor,
         deleteSurvivor,
