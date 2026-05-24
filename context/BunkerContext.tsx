@@ -7,29 +7,23 @@ import React, {
   useEffect,
   useCallback,
 } from "react";
+import {
+  normalizePolicy,
+  nexusFetch,
+  type NexusPolicy,
+} from "@/lib/nexus-api";
 
-// Always same-origin — browser calls `/api/*`, forwarded server-side (no CORS).
 if (typeof window !== "undefined" && process.env.NEXT_PUBLIC_NEXUS_API_URL) {
   console.error(
     "[NEXUS] Remove NEXT_PUBLIC_NEXUS_API_URL from .env — it causes CORS. Use /api proxy only.",
   );
 }
 
-function apiPath(path: string) {
-  const p = path.startsWith("/") ? path : `/${path}`;
-  if (p.startsWith("http://") || p.startsWith("https://")) {
-    throw new Error("API calls must use /api/... paths, not full URLs");
-  }
-  return p;
-}
-
-// ---------------------------------------------------------------------------
-// Types
-// ---------------------------------------------------------------------------
-
 export type Clearance = "NONE" | "DELTA" | "GAMMA" | "BETA" | "ALPHA" | "NEXUS";
 export type SurvivorStatus = "active" | "quarantined" | "deceased" | "missing";
 export type PolicyStatus = "draft" | "active" | "suspended" | "retired";
+
+export type Policy = NexusPolicy & { status: PolicyStatus; min_clearance: Clearance };
 
 export interface Survivor {
   id: string;
@@ -40,23 +34,6 @@ export interface Survivor {
   status: SurvivorStatus;
   assigned_zone_id: string | null;
   registered_at: string;
-  updated_at: string;
-}
-
-export interface Policy {
-  id: string;
-  policy_code: string;
-  name: string;
-  description: string | null;
-  domain: string;
-  integration_domain_id: string | null;
-  is_general: boolean;
-  is_mandatory: boolean;
-  status: PolicyStatus;
-  min_clearance: Clearance;
-  enacted_at: string | null;
-  retired_at: string | null;
-  created_at: string;
   updated_at: string;
 }
 
@@ -81,33 +58,30 @@ export interface QuarantineEvent {
 }
 
 interface BunkerContextType {
-  // data
   policies: Policy[];
   survivors: Survivor[];
   healthRecords: HealthRecord[];
   quarantineEvents: QuarantineEvent[];
-  // status
   dbConnected: boolean;
   connectionError: string | null;
   loading: boolean;
-  // actions
+  actionError: string | null;
+  clearActionError: () => void;
   refreshData: () => void;
-  addSurvivor: (data: Partial<Survivor>) => Promise<void>;
-  updateSurvivor: (id: string, data: Partial<Survivor>) => Promise<void>;
-  deleteSurvivor: (id: string) => Promise<void>;
-  addPolicy: (data: Partial<Policy>) => Promise<void>;
-  updatePolicy: (id: string, data: Partial<Policy>) => Promise<void>;
-  deletePolicy: (id: string) => Promise<void>;
+  addSurvivor: (data: Partial<Survivor>) => Promise<boolean>;
+  updateSurvivor: (id: string, data: Partial<Survivor>) => Promise<boolean>;
+  deleteSurvivor: (id: string) => Promise<boolean>;
+  addPolicy: (body: Record<string, unknown>) => Promise<boolean>;
+  updatePolicy: (id: string, data: Record<string, unknown>) => Promise<boolean>;
+  deletePolicy: (id: string) => Promise<boolean>;
 }
 
 const BunkerContext = createContext<BunkerContextType | undefined>(undefined);
 
-async function apiFetch(path: string, init?: RequestInit) {
-  const res = await fetch(apiPath(path), {
-    ...init,
-    headers: { "Content-Type": "application/json", ...init?.headers },
-  });
-  return res.json();
+function formatApiError(error: string, details?: unknown) {
+  if (!details) return error;
+  const detailStr = typeof details === "string" ? details : JSON.stringify(details);
+  return `${error}: ${detailStr}`;
 }
 
 export function BunkerProvider({ children }: { children: React.ReactNode }) {
@@ -118,6 +92,9 @@ export function BunkerProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [dbConnected, setDbConnected] = useState(false);
   const [connectionError, setConnectionError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
+
+  const clearActionError = useCallback(() => setActionError(null), []);
 
   const fetchData = useCallback(async () => {
     try {
@@ -140,7 +117,8 @@ export function BunkerProvider({ children }: { children: React.ReactNode }) {
         fetch("/api/admin/quarantine-events?limit=200"),
       ]);
 
-      setPolicies(pJson?.data?.items ?? []);
+      const rawPolicies = (pJson?.data?.items ?? []) as Policy[];
+      setPolicies(rawPolicies.map((p) => normalizePolicy(p) as Policy));
       setSurvivors(sJson?.data?.items ?? []);
 
       if (hRes.status === "fulfilled" && hRes.value.ok) {
@@ -162,50 +140,92 @@ export function BunkerProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  useEffect(() => { fetchData(); }, [fetchData]);
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   const addSurvivor = async (data: Partial<Survivor>) => {
-    const json = await apiFetch("/api/admin/survivors", {
+    setActionError(null);
+    const result = await nexusFetch<Survivor>("/api/admin/survivors", {
       method: "POST",
       body: JSON.stringify(data),
     });
-    if (json?.ok) setSurvivors((prev) => [json.data, ...prev]);
+    if (!result.ok) {
+      setActionError(formatApiError(result.error, result.details));
+      return false;
+    }
+    setSurvivors((prev) => [result.data, ...prev]);
+    return true;
   };
 
   const updateSurvivor = async (id: string, data: Partial<Survivor>) => {
-    const json = await apiFetch(`/api/admin/survivors/${id}`, {
+    setActionError(null);
+    const result = await nexusFetch<Survivor>(`/api/admin/survivors/${id}`, {
       method: "PATCH",
       body: JSON.stringify(data),
     });
-    if (json?.ok)
-      setSurvivors((prev) => prev.map((s) => (s.id === id ? json.data : s)));
+    if (!result.ok) {
+      setActionError(formatApiError(result.error, result.details));
+      return false;
+    }
+    setSurvivors((prev) => prev.map((s) => (s.id === id ? result.data : s)));
+    return true;
   };
 
   const deleteSurvivor = async (id: string) => {
-    const json = await apiFetch(`/api/admin/survivors/${id}`, { method: "DELETE" });
-    if (json?.ok) setSurvivors((prev) => prev.filter((s) => s.id !== id));
-  };
-
-  const addPolicy = async (data: Partial<Policy>) => {
-    const json = await apiFetch("/api/admin/policies", {
-      method: "POST",
-      body: JSON.stringify(data),
+    setActionError(null);
+    const result = await nexusFetch<{ id: string }>(`/api/admin/survivors/${id}`, {
+      method: "DELETE",
     });
-    if (json?.ok) setPolicies((prev) => [json.data, ...prev]);
+    if (!result.ok) {
+      setActionError(formatApiError(result.error, result.details));
+      return false;
+    }
+    setSurvivors((prev) => prev.filter((s) => s.id !== id));
+    return true;
   };
 
-  const updatePolicy = async (id: string, data: Partial<Policy>) => {
-    const json = await apiFetch(`/api/admin/policies/${id}`, {
+  const addPolicy = async (body: Record<string, unknown>) => {
+    setActionError(null);
+    const result = await nexusFetch<Policy>("/api/admin/policies", {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
+    if (!result.ok) {
+      setActionError(formatApiError(result.error, result.details));
+      return false;
+    }
+    setPolicies((prev) => [normalizePolicy(result.data) as Policy, ...prev]);
+    return true;
+  };
+
+  const updatePolicy = async (id: string, data: Record<string, unknown>) => {
+    setActionError(null);
+    const result = await nexusFetch<Policy>(`/api/admin/policies/${id}`, {
       method: "PATCH",
       body: JSON.stringify(data),
     });
-    if (json?.ok)
-      setPolicies((prev) => prev.map((p) => (p.id === id ? json.data : p)));
+    if (!result.ok) {
+      setActionError(formatApiError(result.error, result.details));
+      return false;
+    }
+    setPolicies((prev) =>
+      prev.map((p) => (p.id === id ? (normalizePolicy(result.data) as Policy) : p)),
+    );
+    return true;
   };
 
   const deletePolicy = async (id: string) => {
-    const json = await apiFetch(`/api/admin/policies/${id}`, { method: "DELETE" });
-    if (json?.ok) setPolicies((prev) => prev.filter((p) => p.id !== id));
+    setActionError(null);
+    const result = await nexusFetch<{ id: string }>(`/api/admin/policies/${id}`, {
+      method: "DELETE",
+    });
+    if (!result.ok) {
+      setActionError(formatApiError(result.error, result.details));
+      return false;
+    }
+    setPolicies((prev) => prev.filter((p) => p.id !== id));
+    return true;
   };
 
   return (
@@ -218,6 +238,8 @@ export function BunkerProvider({ children }: { children: React.ReactNode }) {
         dbConnected,
         connectionError,
         loading,
+        actionError,
+        clearActionError,
         refreshData: fetchData,
         addSurvivor,
         updateSurvivor,

@@ -1,13 +1,12 @@
 "use client";
 
 import { useBunker } from "@/context/BunkerContext";
+import { policiesForSector } from "@/lib/nexus-api";
 
 export default function PulseFeed() {
   const { policies, healthRecords, quarantineEvents, survivors, loading } = useBunker();
 
-  const pulsePolicies = policies.filter(
-    (p) => !p.is_general && (p.domain?.toLowerCase() === "medical" || p.domain?.toLowerCase() === "pulse")
-  );
+  const pulsePolicies = policiesForSector(policies, "medical");
 
   const activeQuarantine = quarantineEvents.filter((q) => q.is_active);
 

@@ -52,29 +52,29 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   return (
     <BunkerProvider>
-      <div className="flex h-screen bg-slate-50 overflow-hidden text-slate-900 font-sans">
+      <div className="flex h-screen bg-[#070b11] overflow-hidden text-emerald-100">
         {/* Sidebar */}
-        <aside className="w-80 bg-white border-r border-slate-200 flex flex-col shadow-sm">
-          <div className="p-8">
+        <aside className="w-72 bg-[#0d1420] border-r border-slate-200 flex flex-col">
+          <div className="p-5">
             <Link href="/dashboard" className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-xl bg-blue-600 flex items-center justify-center shadow-lg shadow-blue-200">
+              <div className="h-8 w-8 rounded-md bg-emerald-500/15 border border-emerald-400/30 flex items-center justify-center">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" /></svg>
               </div>
-              <span className="font-extrabold text-2xl tracking-tight text-slate-800">NexusCore</span>
+              <span className="font-bold text-lg tracking-wide text-emerald-100">NexusCore</span>
             </Link>
           </div>
 
-          <nav className="flex-1 overflow-y-auto px-6 py-4 space-y-8">
+          <nav className="flex-1 overflow-y-auto px-4 py-2 space-y-5">
             <div>
-              <h3 className="px-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Core Governance</h3>
+              <h3 className="px-3 text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-2">Core Governance</h3>
               <ul className="space-y-1">
                 {navigation.map((item) => (
                   <li key={item.href}>
                     <Link
                       href={item.href}
-                      className={`flex items-center gap-4 px-4 py-3 rounded-xl text-base font-bold transition-all ${pathname === item.href ? "bg-blue-50 text-blue-700 shadow-sm" : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"}`}
+                      className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-semibold transition-all ${pathname === item.href ? "bg-emerald-500/10 text-emerald-300 border border-emerald-500/30" : "text-slate-400 hover:bg-slate-900 hover:text-slate-100 border border-transparent"}`}
                     >
-                      <span className={pathname === item.href ? "text-blue-600" : "text-slate-400"}>{item.icon}</span>
+                      <span className={pathname === item.href ? "text-emerald-300" : "text-slate-500"}>{item.icon}</span>
                       {item.name}
                     </Link>
                   </li>
@@ -83,15 +83,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </div>
 
             <div>
-              <h3 className="px-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Sector Hubs</h3>
+              <h3 className="px-3 text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-2">Sector Hubs</h3>
               <ul className="space-y-1">
                 {sectorHubs.map((item) => (
                   <li key={item.href}>
                     <Link
                       href={item.href}
-                      className={`flex items-center gap-4 px-4 py-3 rounded-xl text-sm font-bold transition-all ${pathname === item.href ? "bg-slate-100 text-slate-900 shadow-inner" : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"}`}
+                      className={`flex items-center gap-3 px-3 py-2 rounded-md text-xs font-semibold transition-all ${pathname === item.href ? "bg-emerald-500/10 text-emerald-300 border border-emerald-500/30" : "text-slate-400 hover:bg-slate-900 hover:text-slate-100 border border-transparent"}`}
                     >
-                      <span className={pathname === item.href ? item.color : "text-slate-300"}>{item.icon}</span>
+                      <span className={pathname === item.href ? item.color : "text-slate-600"}>{item.icon}</span>
                       {item.name}
                     </Link>
                   </li>
@@ -100,16 +100,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </div>
           </nav>
 
-          <div className="p-6 mt-auto">
-            <div className="p-4 bg-slate-50 border border-slate-100 rounded-2xl flex items-center justify-between">
+          <div className="p-4 mt-auto">
+            <div className="p-3 bg-[#111b2a] border border-slate-100 rounded-md flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-xs">NP</div>
+                <div className="h-8 w-8 rounded-full bg-emerald-500/15 text-emerald-300 flex items-center justify-center font-bold text-[10px]">NP</div>
                 <div className="min-w-0">
-                  <p className="text-xs font-extrabold text-slate-800 truncate">Nexus Prime</p>
-                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-wider truncate">Overlord Clearance</p>
+                  <p className="text-[11px] font-bold text-slate-200 truncate">Nexus Prime</p>
+                  <p className="text-[9px] font-bold text-slate-500 uppercase tracking-wider truncate">Overlord</p>
                 </div>
               </div>
-              <Link href="/login" className="text-slate-300 hover:text-red-500 transition-colors p-1">
+              <Link href="/login" className="text-slate-500 hover:text-red-400 transition-colors p-1">
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" /></svg>
               </Link>
             </div>
@@ -118,27 +118,27 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
         {/* Main area */}
         <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-          <header className="h-20 bg-white border-b border-slate-200 flex items-center justify-between px-12 shadow-sm shrink-0">
+          <header className="h-14 bg-[#0d1420] border-b border-slate-200 flex items-center justify-between px-6 shrink-0">
             <div className="flex items-center gap-4">
-              <h2 className="text-xl font-extrabold text-slate-800 tracking-tight uppercase tracking-[0.05em]">
+              <h2 className="text-sm font-bold text-slate-200 tracking-wide uppercase">
                 {[...navigation, ...sectorHubs].find((n) => n.href === pathname)?.name ?? "Governance Console"}
               </h2>
-              <div className="flex items-center gap-2 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-100 ml-4">
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                <span className="text-[9px] font-black text-emerald-700 uppercase tracking-widest">System Link Active</span>
+              <div className="flex items-center gap-2 bg-emerald-500/10 px-2 py-1 rounded-md border border-emerald-500/20 ml-2">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                <span className="text-[9px] font-bold text-emerald-300 uppercase tracking-widest">Live</span>
               </div>
             </div>
-            <div className="flex items-center gap-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+            <div className="flex items-center gap-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">
               <span className="hidden lg:inline">API: {HOSTED_API_URL.replace("https://", "")}</span>
               <span>Bunker ID: DOMAIN-04</span>
-              <span className="font-mono text-slate-800 text-base border-l border-slate-200 pl-6">
+              <span className="font-mono text-slate-300 text-xs border-l border-slate-200 pl-3">
                 {new Date().toLocaleDateString("en-GB").split("/").join(".")}
               </span>
             </div>
           </header>
 
-          <main className="flex-1 overflow-y-auto p-12 bg-slate-50/50">
-            <div className="max-w-7xl mx-auto space-y-12">
+          <main className="flex-1 overflow-y-auto p-6 bg-[#070b11]">
+            <div className="max-w-6xl mx-auto space-y-6">
               {children}
             </div>
           </main>

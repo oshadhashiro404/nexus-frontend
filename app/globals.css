@@ -1,13 +1,20 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f8fafc;
-  --foreground: #0f172a;
+  --background: #070b11;
+  --foreground: #b6ffd7;
+  --panel: #0d1420;
+  --panel-soft: #111b2a;
+  --line: #1d2a3b;
+  --accent: #2ee6a6;
+  --accent-soft: #123026;
+  --muted: #7fa2b8;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
+  letter-spacing: 0.01em;
 }
 
 @keyframes shake {
@@ -20,4 +27,64 @@ body {
 
 .animate-shake {
   animation: shake 0.4s ease;
+}
+
+/* Terminal vibe: compact, dark, minimal */
+.terminal-ui {
+  font-family: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  font-size: 14px;
+}
+
+.terminal-ui .bg-white,
+.terminal-ui .bg-slate-50,
+.terminal-ui .bg-slate-50\/30,
+.terminal-ui .bg-slate-50\/50 {
+  background-color: var(--panel);
+}
+
+.terminal-ui .bg-slate-100 {
+  background-color: var(--panel-soft);
+}
+
+.terminal-ui .text-slate-900,
+.terminal-ui .text-slate-800 {
+  color: #d6ffe9;
+}
+
+.terminal-ui .text-slate-700,
+.terminal-ui .text-slate-600,
+.terminal-ui .text-slate-500,
+.terminal-ui .text-slate-400,
+.terminal-ui .text-slate-300 {
+  color: var(--muted);
+}
+
+.terminal-ui .border-slate-50,
+.terminal-ui .border-slate-100,
+.terminal-ui .border-slate-200 {
+  border-color: var(--line);
+}
+
+.terminal-ui .bg-blue-50,
+.terminal-ui .bg-emerald-50 {
+  background-color: var(--accent-soft);
+}
+
+.terminal-ui .text-blue-600,
+.terminal-ui .text-blue-700,
+.terminal-ui .text-emerald-600,
+.terminal-ui .text-emerald-700 {
+  color: var(--accent);
+}
+
+.terminal-ui .border-blue-100,
+.terminal-ui .border-emerald-100 {
+  border-color: #1e4f40;
+}
+
+.terminal-ui .shadow-sm,
+.terminal-ui .shadow-lg,
+.terminal-ui .shadow-xl,
+.terminal-ui .shadow-2xl {
+  box-shadow: none;
 }

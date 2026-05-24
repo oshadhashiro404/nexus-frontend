@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useBunker, type Clearance, type SurvivorStatus } from "@/context/BunkerContext";
+import { ActionErrorBanner } from "@/components/ActionErrorBanner";
 
 const CLEARANCE_LEVELS: Clearance[] = ["NONE", "DELTA", "GAMMA", "BETA", "ALPHA", "NEXUS"];
 const STATUS_OPTIONS: SurvivorStatus[] = ["active", "quarantined", "deceased", "missing"];
@@ -14,7 +15,8 @@ const statusStyle: Record<SurvivorStatus, string> = {
 };
 
 export default function CensusPage() {
-  const { survivors, addSurvivor, updateSurvivor, deleteSurvivor, loading } = useBunker();
+  const { survivors, addSurvivor, updateSurvivor, deleteSurvivor, loading, clearActionError } =
+    useBunker();
   const [formData, setFormData] = useState({
     full_name: "",
     duty: "",
@@ -25,12 +27,15 @@ export default function CensusPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    clearActionError();
     setSubmitting(true);
-    await addSurvivor({
+    const ok = await addSurvivor({
       ...formData,
       identity_code: `SUR-${Date.now().toString(36).toUpperCase()}`,
     });
-    setFormData({ full_name: "", duty: "", clearance: "DELTA", status: "active" });
+    if (ok) {
+      setFormData({ full_name: "", duty: "", clearance: "DELTA", status: "active" });
+    }
     setSubmitting(false);
   };
 
@@ -49,6 +54,7 @@ export default function CensusPage() {
 
   return (
     <div className="space-y-12">
+      <ActionErrorBanner />
       <div className="flex flex-col gap-2">
         <h1 className="text-4xl font-extrabold text-slate-900 tracking-tight">Survivor Census</h1>
         <p className="text-xl text-slate-500 font-medium italic">Population registry and biological status monitoring.</p>

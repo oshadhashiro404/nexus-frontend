@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useBunker } from "@/context/BunkerContext";
+import { policiesForSector } from "@/lib/nexus-api";
 
 const INITIAL_REQUESTS = [
   { id: "REQ-901", requester: "ARCHIVE-CORE", asset: "Pre-Collapse Medical Records", clearance: "BETA", status: "Pending" },
@@ -10,9 +11,7 @@ const INITIAL_REQUESTS = [
 
 export default function ArchiveHub() {
   const { policies, loading } = useBunker();
-  const archivePolicies = policies.filter(
-    (p) => !p.is_general && (p.domain?.toLowerCase() === "nexus" || p.domain?.toLowerCase() === "archive")
-  );
+  const archivePolicies = policiesForSector(policies, "nexus");
   const [requests, setRequests] = useState(INITIAL_REQUESTS);
 
   const approve = (id: string) =>

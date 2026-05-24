@@ -1,12 +1,11 @@
 "use client";
 
 import { useBunker } from "@/context/BunkerContext";
+import { policiesForSector } from "@/lib/nexus-api";
 
 export default function TelecomSector() {
   const { policies, loading } = useBunker();
-  const telecomPolicies = policies.filter(
-    (p) => !p.is_general && (p.domain?.toLowerCase() === "signal" || p.domain?.toLowerCase() === "telecom")
-  );
+  const telecomPolicies = policiesForSector(policies, "signal");
 
   if (loading) {
     return (

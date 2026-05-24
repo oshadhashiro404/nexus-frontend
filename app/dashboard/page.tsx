@@ -1,6 +1,7 @@
 "use client";
 
 import { useBunker } from "@/context/BunkerContext";
+import { policiesForSector } from "@/lib/nexus-api";
 
 export default function DashboardOverview() {
   const { policies, survivors, dbConnected, connectionError, loading } = useBunker();
@@ -38,8 +39,8 @@ export default function DashboardOverview() {
     });
   }
 
-  const medicalInReview = policies.some(
-    (p) => p.status === "draft" && (p.domain === "medical" || p.domain === "PULSE")
+  const medicalInReview = policiesForSector(policies, "medical").some(
+    (p) => p.status === "draft",
   );
   if (medicalInReview) {
     alerts.push({
@@ -142,9 +143,10 @@ export default function DashboardOverview() {
           <h3 className="text-2xl font-black text-slate-800 mb-10 tracking-tight">Sector Integrity Diagnostic</h3>
           <div className="h-[300px] flex items-end justify-between gap-8 px-6">
             {domainKeys.map((domain) => {
-              const domainPolicies = policies.filter(
-                (p) => (p.is_general && domain === "general") || (!p.is_general && p.domain?.toLowerCase() === domain)
-              );
+              const domainPolicies =
+                domain === "general"
+                  ? policies.filter((p) => p.is_general)
+                  : policiesForSector(policies, domain);
               const domainActive = domainPolicies.filter((p) => p.status === "active").length;
               const efficiency = domainPolicies.length > 0 ? (domainActive / domainPolicies.length) * 100 : 100;
 

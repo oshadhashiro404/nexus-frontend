@@ -1,12 +1,11 @@
 "use client";
 
 import { useBunker } from "@/context/BunkerContext";
+import { policiesForSector } from "@/lib/nexus-api";
 
 export default function HarvestingSector() {
   const { policies, loading } = useBunker();
-  const harvestPolicies = policies.filter(
-    (p) => !p.is_general && p.domain?.toLowerCase() === "harvest"
-  );
+  const harvestPolicies = policiesForSector(policies, "harvest");
 
   if (loading) {
     return (
