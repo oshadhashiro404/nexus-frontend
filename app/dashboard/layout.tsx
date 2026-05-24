@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { BunkerProvider } from "@/context/BunkerContext";
-import { HOSTED_API_URL } from "@/lib/nexus-config";
+import { HOSTED_API_URL, isSectorEmbedPath } from "@/lib/nexus-config";
 
 const navigation = [
   { name: "Overview", href: "/dashboard" },
@@ -42,7 +42,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const pathname = usePathname();
   const pageTitle =
     [...navigation, ...sectorHubs].find((n) => n.href === pathname)?.name ?? "Console";
-  const isArchiveEmbed = pathname === "/dashboard/archive";
+  const isSectorEmbed = isSectorEmbedPath(pathname);
 
   return (
     <BunkerProvider>
@@ -97,12 +97,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
           <main
             className={
-              isArchiveEmbed
+              isSectorEmbed
                 ? "flex-1 min-h-0 flex flex-col overflow-hidden bg-black"
                 : "flex-1 overflow-y-auto p-3 bg-black"
             }
           >
-            {isArchiveEmbed ? (
+            {isSectorEmbed ? (
               children
             ) : (
               <div className="max-w-5xl mx-auto space-y-3">{children}</div>
