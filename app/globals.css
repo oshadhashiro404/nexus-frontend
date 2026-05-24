@@ -1,54 +1,71 @@
 @import "tailwindcss";
 
 :root {
-  --background: #070b11;
-  --foreground: #b6ffd7;
-  --panel: #0d1420;
-  --panel-soft: #111b2a;
-  --line: #1d2a3b;
-  --accent: #2ee6a6;
-  --accent-soft: #123026;
-  --muted: #7fa2b8;
+  --bg: #000000;
+  --panel: #0a0a0a;
+  --panel-soft: #111111;
+  --line: #1f1f1f;
+  --fg: #33ff66;
+  --fg-dim: #22cc52;
+  --muted: #6b7f6b;
+  --amber: #e6b800;
+  --cyan: #00c8b4;
+  --red: #ff4444;
+  --blue: #4da6ff;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  letter-spacing: 0.01em;
+  background: var(--bg);
+  color: var(--fg);
+  letter-spacing: 0.02em;
 }
 
 @keyframes shake {
   0%, 100% { transform: translateX(0); }
-  20% { transform: translateX(-6px); }
-  40% { transform: translateX(6px); }
-  60% { transform: translateX(-4px); }
-  80% { transform: translateX(4px); }
+  20% { transform: translateX(-4px); }
+  40% { transform: translateX(4px); }
+  60% { transform: translateX(-2px); }
+  80% { transform: translateX(2px); }
 }
 
 .animate-shake {
-  animation: shake 0.4s ease;
+  animation: shake 0.35s ease;
 }
 
-/* Terminal vibe: compact, dark, minimal */
+/* Terminal shell */
 .terminal-ui {
-  font-family: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
-  font-size: 14px;
+  font-family: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12px;
+  line-height: 1.45;
 }
 
+.terminal-ui ::selection {
+  background: var(--fg-dim);
+  color: var(--bg);
+}
+
+/* Neutralize light-theme utility leftovers */
 .terminal-ui .bg-white,
 .terminal-ui .bg-slate-50,
 .terminal-ui .bg-slate-50\/30,
-.terminal-ui .bg-slate-50\/50 {
-  background-color: var(--panel);
+.terminal-ui .bg-slate-50\/50,
+.terminal-ui .bg-orange-50,
+.terminal-ui .bg-emerald-50,
+.terminal-ui .bg-red-50,
+.terminal-ui .bg-blue-50 {
+  background-color: var(--panel) !important;
 }
 
-.terminal-ui .bg-slate-100 {
-  background-color: var(--panel-soft);
+.terminal-ui .bg-slate-100,
+.terminal-ui .bg-slate-200 {
+  background-color: var(--panel-soft) !important;
 }
 
 .terminal-ui .text-slate-900,
-.terminal-ui .text-slate-800 {
-  color: #d6ffe9;
+.terminal-ui .text-slate-800,
+.terminal-ui .text-orange-900,
+.terminal-ui .text-emerald-900 {
+  color: var(--fg) !important;
 }
 
 .terminal-ui .text-slate-700,
@@ -56,35 +73,53 @@ body {
 .terminal-ui .text-slate-500,
 .terminal-ui .text-slate-400,
 .terminal-ui .text-slate-300 {
-  color: var(--muted);
-}
-
-.terminal-ui .border-slate-50,
-.terminal-ui .border-slate-100,
-.terminal-ui .border-slate-200 {
-  border-color: var(--line);
-}
-
-.terminal-ui .bg-blue-50,
-.terminal-ui .bg-emerald-50 {
-  background-color: var(--accent-soft);
+  color: var(--muted) !important;
 }
 
 .terminal-ui .text-blue-600,
 .terminal-ui .text-blue-700,
 .terminal-ui .text-emerald-600,
-.terminal-ui .text-emerald-700 {
-  color: var(--accent);
+.terminal-ui .text-emerald-700,
+.terminal-ui .text-cyan-600 {
+  color: var(--cyan) !important;
 }
 
-.terminal-ui .border-blue-100,
-.terminal-ui .border-emerald-100 {
-  border-color: #1e4f40;
+.terminal-ui .text-red-600,
+.terminal-ui .text-red-700,
+.terminal-ui .text-red-800 {
+  color: var(--red) !important;
+}
+
+.terminal-ui .text-amber-600,
+.terminal-ui .text-amber-200,
+.terminal-ui .text-amber-50 {
+  color: var(--amber) !important;
+}
+
+.terminal-ui .border-slate-50,
+.terminal-ui .border-slate-100,
+.terminal-ui .border-slate-200,
+.terminal-ui .border-orange-100,
+.terminal-ui .border-emerald-100,
+.terminal-ui .border-red-200,
+.terminal-ui .border-blue-100 {
+  border-color: var(--line) !important;
 }
 
 .terminal-ui .shadow-sm,
 .terminal-ui .shadow-lg,
 .terminal-ui .shadow-xl,
-.terminal-ui .shadow-2xl {
-  box-shadow: none;
+.terminal-ui .shadow-2xl,
+.terminal-ui .shadow-red-100,
+.terminal-ui .shadow-orange-100,
+.terminal-ui .shadow-emerald-100,
+.terminal-ui .shadow-blue-100 {
+  box-shadow: none !important;
+}
+
+.terminal-ui .rounded-\[2\.5rem\],
+.terminal-ui .rounded-\[3rem\],
+.terminal-ui .rounded-2xl,
+.terminal-ui .rounded-3xl {
+  border-radius: 0 !important;
 }

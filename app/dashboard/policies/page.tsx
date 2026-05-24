@@ -4,6 +4,17 @@ import { useState } from "react";
 import { useBunker, type PolicyStatus } from "@/context/BunkerContext";
 import { ActionErrorBanner } from "@/components/ActionErrorBanner";
 import {
+  Btn,
+  Badge,
+  Empty,
+  FieldInput,
+  FieldSelect,
+  FieldTextarea,
+  Label,
+  PageHeader,
+  Panel,
+} from "@/components/terminal-ui";
+import {
   buildPolicyCreateBody,
   getPolicySectorCode,
   type IntegrationDomainCode,
@@ -21,11 +32,11 @@ const CATEGORIES: PolicyCategory[] = [
 ];
 const STATUSES: PolicyStatus[] = ["draft", "active", "suspended", "retired"];
 
-const statusStyle: Record<PolicyStatus, string> = {
-  active: "bg-emerald-50 text-emerald-700 border-emerald-100",
-  draft: "bg-orange-50 text-orange-700 border-orange-100",
-  suspended: "bg-red-50 text-red-700 border-red-100",
-  retired: "bg-slate-100 text-slate-500 border-slate-200",
+const statusTone: Record<PolicyStatus, "default" | "ok" | "warn" | "err"> = {
+  active: "ok",
+  draft: "warn",
+  suspended: "err",
+  retired: "default",
 };
 
 export default function PoliciesPage() {
@@ -47,7 +58,6 @@ export default function PoliciesPage() {
     e.preventDefault();
     clearActionError();
     setSubmitting(true);
-
     const body = buildPolicyCreateBody({
       name: formData.name,
       description: formData.description || undefined,
@@ -58,7 +68,6 @@ export default function PoliciesPage() {
       is_mandatory: formData.is_mandatory,
       status: formData.status,
     });
-
     const ok = await addPolicy(body);
     if (ok) {
       setFormData({
@@ -88,50 +97,30 @@ export default function PoliciesPage() {
         : policies.filter((p) => getPolicySectorCode(p) === filter);
 
   if (loading) {
-    return (
-      <div className="flex h-40 items-center justify-center">
-        <div className="h-10 w-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
+    return <p className="text-xs text-[var(--muted)] py-8 text-center">loading...</p>;
   }
 
   return (
-    <div className="space-y-12">
+    <div className="space-y-3">
       <ActionErrorBanner />
+      <PageHeader title="Policy Engine" subtitle="Directives across integration domains" />
 
-      <div className="flex flex-col gap-2">
-        <h1 className="text-4xl font-extrabold text-slate-900 tracking-tight">Policy Engine</h1>
-        <p className="text-xl text-slate-500 font-medium italic">
-          Define and enforce global directives across NexusCore domains.
-        </p>
-      </div>
-
-      <section className="bg-white p-10 rounded-[2.5rem] border border-slate-200 shadow-sm">
-        <h3 className="text-2xl font-bold text-slate-800 mb-8 flex items-center gap-3">
-          <span className="h-8 w-1.5 bg-blue-600 rounded-full" />
-          Draft New Policy
-        </h3>
-        <form onSubmit={handleSubmit} className="space-y-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+      <Panel title="new directive">
+        <form onSubmit={handleSubmit} className="space-y-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
-              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 px-1">
-                Directive Title
-              </label>
-              <input
-                type="text"
+              <Label>title</Label>
+              <FieldInput
                 required
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-6 py-4 text-lg font-bold text-slate-800 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition-all"
-                placeholder="e.g. Nutrient Rationing Protocol"
+                placeholder="nutrient rationing protocol"
               />
             </div>
-            <div className="grid grid-cols-2 gap-8">
+            <div className="grid grid-cols-2 gap-2">
               <div>
-                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 px-1">
-                  Sector Hub
-                </label>
-                <select
+                <Label>sector</Label>
+                <FieldSelect
                   value={formData.integration_domain}
                   disabled={formData.is_general}
                   onChange={(e) =>
@@ -140,115 +129,95 @@ export default function PoliciesPage() {
                       integration_domain: e.target.value as IntegrationDomainCode,
                     })
                   }
-                  className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-6 py-4 text-lg font-bold text-slate-800 focus:bg-white focus:border-blue-500 outline-none cursor-pointer appearance-none disabled:opacity-40"
                 >
                   {INTEGRATION_DOMAINS.map((d) => (
                     <option key={d} value={d}>
-                      {d.charAt(0).toUpperCase() + d.slice(1)}
+                      {d}
                     </option>
                   ))}
-                </select>
+                </FieldSelect>
               </div>
               <div>
-                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 px-1">
-                  Status
-                </label>
-                <select
+                <Label>status</Label>
+                <FieldSelect
                   value={formData.status}
                   onChange={(e) =>
                     setFormData({ ...formData, status: e.target.value as PolicyStatus })
                   }
-                  className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-6 py-4 text-lg font-bold text-slate-800 focus:bg-white focus:border-blue-500 outline-none cursor-pointer appearance-none"
                 >
                   {STATUSES.map((s) => (
                     <option key={s} value={s}>
                       {s}
                     </option>
                   ))}
-                </select>
+                </FieldSelect>
               </div>
             </div>
           </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
-              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 px-1">
-                Functional Category
-              </label>
-              <select
+              <Label>category</Label>
+              <FieldSelect
                 value={formData.category}
                 onChange={(e) =>
                   setFormData({ ...formData, category: e.target.value as PolicyCategory })
                 }
-                className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-6 py-4 text-lg font-bold text-slate-800 focus:bg-white focus:border-blue-500 outline-none cursor-pointer appearance-none"
               >
                 {CATEGORIES.map((c) => (
                   <option key={c} value={c}>
                     {c}
                   </option>
                 ))}
-              </select>
+              </FieldSelect>
             </div>
             <div>
-              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 px-1">
-                Full Description
-              </label>
-              <textarea
-                rows={3}
+              <Label>description</Label>
+              <FieldTextarea
+                rows={2}
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-6 py-4 text-lg font-medium text-slate-600 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition-all resize-none"
-                placeholder="Enter the detailed ruling and legal justification..."
+                placeholder="ruling text..."
               />
             </div>
           </div>
-
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-8">
-              <label className="flex items-center gap-3 cursor-pointer">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex gap-4 text-[10px] text-[var(--muted)]">
+              <label className="flex items-center gap-1.5 cursor-pointer">
                 <input
                   type="checkbox"
                   checked={formData.is_general}
                   onChange={(e) => setFormData({ ...formData, is_general: e.target.checked })}
-                  className="w-5 h-5 rounded accent-blue-600"
+                  className="accent-[var(--fg-dim)]"
                 />
-                <span className="text-sm font-black text-slate-500 uppercase tracking-widest">
-                  General Policy (all domains)
-                </span>
+                general
               </label>
-              <label className="flex items-center gap-3 cursor-pointer">
+              <label className="flex items-center gap-1.5 cursor-pointer">
                 <input
                   type="checkbox"
                   checked={formData.is_mandatory}
                   onChange={(e) => setFormData({ ...formData, is_mandatory: e.target.checked })}
-                  className="w-5 h-5 rounded accent-blue-600"
+                  className="accent-[var(--fg-dim)]"
                 />
-                <span className="text-sm font-black text-slate-500 uppercase tracking-widest">
-                  Mandatory
-                </span>
+                mandatory
               </label>
             </div>
-            <button
-              type="submit"
-              disabled={submitting}
-              className="px-12 py-5 bg-slate-900 hover:bg-blue-600 disabled:opacity-60 text-white font-black rounded-2xl shadow-xl shadow-slate-200 transition-all active:scale-[0.98] uppercase tracking-widest text-sm"
-            >
-              {submitting ? "Publishing..." : "Publish Directive"}
-            </button>
+            <Btn type="submit" disabled={submitting}>
+              {submitting ? "..." : "publish"}
+            </Btn>
           </div>
         </form>
-      </section>
+      </Panel>
 
-      <div className="flex gap-3 flex-wrap">
+      <div className="flex gap-1 flex-wrap">
         {["all", "general", ...INTEGRATION_DOMAINS].map((f) => (
           <button
             key={f}
             type="button"
             onClick={() => setFilter(f)}
-            className={`px-5 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all border ${
+            className={`px-2 py-0.5 text-[9px] uppercase border ${
               filter === f
-                ? "bg-blue-600 text-white border-blue-600"
-                : "bg-white text-slate-500 border-slate-200 hover:border-blue-300"
+                ? "border-[var(--fg)] text-[var(--fg)] bg-[var(--fg)]/10"
+                : "border-[var(--line)] text-[var(--muted)] hover:text-[var(--fg-dim)]"
             }`}
           >
             {f}
@@ -256,100 +225,58 @@ export default function PoliciesPage() {
         ))}
       </div>
 
-      <section className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm overflow-hidden">
-        <div className="p-8 border-b border-slate-100 bg-slate-50/30 flex justify-between items-center">
-          <h3 className="text-xl font-bold text-slate-800">Global Enforcement Registry</h3>
-          <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-            {displayed.length} directives
-          </span>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-left">
+      <Panel title={`registry (${displayed.length})`}>
+        <div className="overflow-x-auto -mx-3 -mb-3">
+          <table className="w-full text-left text-xs">
             <thead>
-              <tr className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] border-b border-slate-100">
-                <th className="py-6 px-10">Code</th>
-                <th className="py-6 px-6">Directive & Sector</th>
-                <th className="py-6 px-6">Description</th>
-                <th className="py-6 px-6 text-center">Status</th>
-                <th className="py-6 px-10 text-right">Actions</th>
+              <tr className="text-[9px] uppercase tracking-wider text-[var(--muted)] border-b border-[var(--line)]">
+                <th className="py-2 px-3">code</th>
+                <th className="py-2 px-2">directive</th>
+                <th className="py-2 px-2 hidden md:table-cell">desc</th>
+                <th className="py-2 px-2 text-center">status</th>
+                <th className="py-2 px-3 text-right">act</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-50">
+            <tbody className="divide-y divide-[var(--line)]">
               {displayed.length === 0 ? (
                 <tr>
-                  <td
-                    colSpan={5}
-                    className="py-16 text-center text-slate-400 font-bold uppercase tracking-widest text-sm italic"
-                  >
-                    No directives found
+                  <td colSpan={5}>
+                    <Empty>no directives</Empty>
                   </td>
                 </tr>
               ) : (
                 displayed.map((p) => (
-                  <tr key={p.id} className="hover:bg-slate-50/50 transition-colors group">
-                    <td className="py-8 px-10 font-mono text-sm font-black text-slate-300">
+                  <tr key={p.id} className="hover:bg-[var(--fg)]/5">
+                    <td className="py-2 px-3 font-mono text-[10px] text-[var(--muted)]">
                       {p.policy_code}
                     </td>
-                    <td className="py-8 px-6">
-                      <p className="font-bold text-slate-800 text-lg">{p.name}</p>
-                      <div className="flex items-center gap-2 mt-1 flex-wrap">
+                    <td className="py-2 px-2">
+                      <p className="text-[var(--fg)] font-bold">{p.name}</p>
+                      <div className="flex gap-1 mt-1 flex-wrap">
                         {p.is_general ? (
-                          <span className="px-2 py-0.5 bg-slate-50 text-slate-400 rounded text-[9px] font-black uppercase tracking-widest border border-slate-100">
-                            General
-                          </span>
+                          <Badge>general</Badge>
                         ) : (
-                          <span className="px-2 py-0.5 bg-blue-50 text-blue-600 rounded text-[9px] font-black uppercase tracking-widest border border-blue-100">
-                            {getPolicySectorCode(p) ?? "—"}
-                          </span>
+                          <Badge tone="ok">{getPolicySectorCode(p) ?? "—"}</Badge>
                         )}
-                        <span className="px-2 py-0.5 bg-slate-100 text-slate-500 rounded text-[9px] font-black uppercase tracking-widest border border-slate-200">
-                          {p.domain}
-                        </span>
-                        {p.is_mandatory && (
-                          <span className="px-2 py-0.5 bg-red-50 text-red-500 rounded text-[9px] font-black uppercase tracking-widest border border-red-100">
-                            Mandatory
-                          </span>
-                        )}
+                        <Badge>{p.domain}</Badge>
+                        {p.is_mandatory && <Badge tone="err">req</Badge>}
                       </div>
                     </td>
-                    <td className="py-8 px-6 max-w-sm">
-                      <p className="text-sm font-medium text-slate-500 leading-relaxed truncate group-hover:whitespace-normal transition-all">
-                        {p.description ?? "—"}
-                      </p>
+                    <td className="py-2 px-2 hidden md:table-cell text-[var(--muted)] max-w-[200px] truncate">
+                      {p.description ?? "—"}
                     </td>
-                    <td className="py-8 px-6 text-center">
-                      <button
-                        type="button"
-                        onClick={() => toggleStatus(p)}
-                        className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-[0.1em] transition-all border-2 ${statusStyle[p.status]}`}
-                      >
-                        {p.status}
+                    <td className="py-2 px-2 text-center">
+                      <button type="button" onClick={() => toggleStatus(p)}>
+                        <Badge tone={statusTone[p.status]}>{p.status}</Badge>
                       </button>
                     </td>
-                    <td className="py-8 px-10 text-right">
+                    <td className="py-2 px-3 text-right">
                       <button
                         type="button"
                         onClick={() => deletePolicy(p.id)}
-                        className="p-2 text-slate-300 hover:text-red-600 transition-colors rounded-lg hover:bg-red-50"
-                        title="Purge directive"
+                        className="text-[10px] text-[var(--muted)] hover:text-[var(--red)]"
                       >
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          width="20"
-                          height="20"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2.5"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        >
-                          <path d="M3 6h18" />
-                          <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
-                          <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
-                          <line x1="10" x2="10" y1="11" y2="17" />
-                          <line x1="14" x2="14" y1="11" y2="17" />
-                        </svg>
+                        del
                       </button>
                     </td>
                   </tr>
@@ -358,7 +285,7 @@ export default function PoliciesPage() {
             </tbody>
           </table>
         </div>
-      </section>
+      </Panel>
     </div>
   );
 }
