@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
-import { EXTERNAL_SURVIVORS_API_URL } from "@/lib/nexus-config";
+import { getBunkerEmbedOrigin } from "@/lib/embed-proxy";
 import { parseExternalSurvivors } from "@/lib/external-survivors";
 
 export const runtime = "nodejs";
 
 export async function GET() {
-  const url = `${EXTERNAL_SURVIVORS_API_URL}/api/survivors`;
+  const url = `${getBunkerEmbedOrigin()}/api/survivors`;
 
   try {
     const res = await fetch(url, {
