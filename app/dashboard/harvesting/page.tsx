@@ -1,17 +1,14 @@
 "use client";
 
-import { SectorPage } from "@/components/sector-page";
+import { SectorEmbed } from "@/components/sector-embed";
+import { HARVEST_EMBED_URL } from "@/lib/nexus-config";
 
 export default function HarvestingPage() {
   return (
-    <SectorPage
-      title="Harvesting Hub"
-      subtitle="Resource extraction and distribution"
-      domain="harvest"
-      stats={[
-        { label: "yield", value: "14.2M", hint: "tons est." },
-        { label: "logistics", value: "nominal", hint: "chain ok" },
-      ]}
+    <SectorEmbed
+      title="Harvest — Bunker Agriculture Command"
+      src={HARVEST_EMBED_URL}
+      iframeTitle="Harvest — Bunker Agriculture Command"
     />
   );
 }
